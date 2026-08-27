@@ -1,0 +1,17 @@
+venue_id,config,capacity,unit,confidence,capacity_source,verified_on
+stade_de_france,football_rugby,80698,seats,high,https://en.wikipedia.org/wiki/Stade_de_France,2026-08-27
+stade_de_france,concert_max,97000,people,medium,https://www.goall.fr/capacite-du-stade-de-france-en-concert-ce-qui-change-par-rapport-aux-matchs/,2026-08-27
+parc_des_princes,football,47929,seats,high,https://en.wikipedia.org/wiki/Parc_des_Princes,2026-08-27
+paris_la_defense_arena,rugby,30681,seats,high,https://stadiumdb.com/stadiums/fra/u_arena,2026-08-27
+paris_la_defense_arena,concert,40000,people,medium,https://en.wikipedia.org/wiki/Paris_La_D%C3%A9fense_Arena,2026-08-27
+accor_arena,concert_max,20300,people,high,https://en.wikipedia.org/wiki/Accor_Arena,2026-08-27
+roland_garros,court_philippe_chatrier,15225,seats,high,https://stade.rolandgarros.com/en/places/court-philippe-chatrier,2026-08-27
+stade_jean_bouin,rugby_football,20000,seats,high,https://en.wikipedia.org/wiki/Stade_Jean-Bouin_(Paris),2026-08-27
+adidas_arena,sport,8000,seats,high,https://en.wikipedia.org/wiki/Adidas_Arena,2026-08-27
+adidas_arena,concert,9000,people,high,https://en.wikipedia.org/wiki/Adidas_Arena,2026-08-27
+zenith_la_villette,concert_max,6804,people,high,https://fr.wikipedia.org/wiki/Le_Z%C3%A9nith_Paris_%E2%80%93_La_Villette,2026-08-27
+stade_charlety,athletics_football,20000,seats,high,https://en.wikipedia.org/wiki/Stade_S%C3%A9bastien_Charl%C3%A9ty,2026-08-27
+la_seine_musicale,grande_seine_standing,6000,people,high,https://www.laseinemusicale.com/grande-seine/,2026-08-27
+la_seine_musicale,grande_seine_seated,4000,seats,high,https://www.laseinemusicale.com/grande-seine/,2026-08-27
+paris_expo_versailles,exhibition_space,169400,m2,low,https://www.viparis.com/en/our-venues/paris-expo-porte-de-versailles-en,2026-08-27
+villepinte_expo,exhibition_space,246312,m2,medium,https://www.viparis.com/en/our-venues/paris-nord-villepinte-en/spaces,2026-08-27

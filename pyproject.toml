@@ -8,6 +8,11 @@ dependencies = [
     "polars>=1.0",
     "duckdb>=1.0",
     "rich>=13.0",
+    # Les archives routieres 2021 et 2023 de la Ville de Paris sont compressees en
+    # deflate64, que le `zipfile` de la bibliotheque standard refuse d'ouvrir. Les
+    # autres annees sont en deflate ordinaire ; la methode change d'une annee a
+    # l'autre sans prevenir.
+    "zipfile-deflate64>=0.2",
 ]
 
 [project.scripts]

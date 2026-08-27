@@ -22,7 +22,7 @@ from pathlib import Path
 import duckdb
 import polars as pl
 
-from .config import DB_PATH, LAKE_DIR, RAW_DIR, ensure_dirs
+from .config import DB_PATH, LAKE_DIR, RAW_DIR, REFERENCE_DIR, ensure_dirs
 
 
 def utcnow() -> str:
@@ -96,25 +96,52 @@ def write_partition(df: pl.DataFrame, source: str, partition: str) -> Path:
     return out
 
 
+def read_reference(name: str) -> pl.DataFrame:
+    """Read a hand-curated CSV from data/reference/ (these live in git)."""
+    p = REFERENCE_DIR / name
+    if not p.exists():
+        raise FileNotFoundError(
+            f"{p} is missing. Reference CSVs are tracked in git; "
+            f"run from the repo, or point PARISMOB_DATA at a tree that contains them."
+        )
+    return pl.read_csv(p)
+
+
 def connect() -> duckdb.DuckDBPyConnection:
     """A DuckDB connection with every Parquet partition exposed as a view.
 
     DuckDB reads Parquet directly off disk, so nothing is loaded into RAM until a
     query actually needs it. This is why the whole lake stays usable on a laptop.
+
+    Reference CSVs are exposed too, so a venue-to-validations join is one SQL
+    statement rather than a Python round-trip.
     """
     ensure_dirs()
     con = duckdb.connect(str(DB_PATH))
+
+    def _view(name: str, select: str) -> None:
+        # Quote the identifier: source names come from directory names, and an
+        # unquoted one containing a hyphen is a syntax error rather than a view.
+        ident = '"' + name.replace('"', '""') + '"'
+        con.execute(f"CREATE OR REPLACE VIEW {ident} AS {select}")
+
     for src_dir in sorted(LAKE_DIR.iterdir()) if LAKE_DIR.exists() else []:
-        if not src_dir.is_dir():
-            continue
-        if not any(src_dir.glob("*.parquet")):
+        if not src_dir.is_dir() or not any(src_dir.glob("*.parquet")):
             continue
         glob = str(src_dir / "*.parquet").replace("'", "''")
-        con.execute(
-            f"CREATE OR REPLACE VIEW {src_dir.name} AS "
-            f"SELECT * FROM read_parquet('{glob}', union_by_name = true)"
-        )
+        # union_by_name tolerates partitions whose columns drifted between years.
+        _view(src_dir.name, f"SELECT * FROM read_parquet('{glob}', union_by_name = true)")
+
+    for csv_path in sorted(REFERENCE_DIR.glob("*.csv")) if REFERENCE_DIR.exists() else []:
+        esc = str(csv_path).replace("'", "''")
+        _view(csv_path.stem, f"SELECT * FROM read_csv_auto('{esc}')")
+
     return con
+
+
+def _partition_rows(path: Path) -> int:
+    """Row count from Parquet footer metadata -- no column data is read."""
+    return pl.scan_parquet(path).select(pl.len()).collect().item()
 
 
 def lake_status() -> list[dict]:
@@ -128,12 +155,11 @@ def lake_status() -> list[dict]:
         files = sorted(src_dir.glob("*.parquet"))
         if not files:
             continue
-        n = sum(pl.read_parquet_schema(f) is not None and pl.scan_parquet(f).select(pl.len()).collect().item() for f in files)
         rows.append(
             {
                 "source": src_dir.name,
                 "partitions": len(files),
-                "rows": n,
+                "rows": sum(_partition_rows(f) for f in files),
                 "mb": round(sum(f.stat().st_size for f in files) / 1e6, 1),
             }
         )

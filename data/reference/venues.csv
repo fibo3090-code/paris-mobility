@@ -1,0 +1,13 @@
+venue_id,name,commune,lat,lon,serving_zdc,radius_m,notes
+stade_de_france,Stade de France,Saint-Denis,48.92446,2.36018,72211|72206|72285|490784,1300,"RER B (La Plaine) + RER D (Stade de France) + M13/T8 (Porte de Paris) + M14 (Pleyel, from 2024). ZDC 490784 is absent from validations before 2024 because M14 did not reach Pleyel until then."
+parc_des_princes,Parc des Princes,Paris 16e,48.84145,2.25302,71084|71124|73658|71169,900,"M9 and M10. Shares its catchment with Stade Jean-Bouin, 400m away -- attribute event days carefully when both are in use."
+paris_la_defense_arena,Plenitude Arena (ex Paris La Defense Arena),Nanterre,48.89554,2.22948,70945|488087|71517|72063,900,"Renamed Plenitude Arena in 2025. La Defense (71517) is a six-line interchange, so its baseline dwarfs the event signal; Nanterre-Prefecture and Nanterre-La-Folie are the cleaner indicators."
+accor_arena,Accor Arena,Paris 12e,48.83862,2.37844,71607|71597|73626,700,"Gare de Bercy is 174m away. Gare de Lyon (73626) is a mainline terminus and will not show an event signal above its own baseline."
+roland_garros,Stade Roland-Garros,Paris 16e,48.84700,2.24700,71169|71147|73658,900,"Attendance is spread across courts and across a two-week tournament rather than concentrated in one session, so the daily profile differs fundamentally from a stadium event."
+stade_jean_bouin,Stade Jean-Bouin,Paris 16e,48.84300,2.25200,71124|71084|71169|73658,900,"Catchment overlaps Parc des Princes almost entirely."
+adidas_arena,Adidas Arena,Paris 18e,48.89900,2.35990,72064|72066,700,"Opened February 2024, so there is no pre-2024 history to learn from."
+zenith_la_villette,Zenith Paris - La Villette,Paris 19e,48.89380,2.39030,72430|71989|72031,900,"Sits inside Parc de la Villette; the Philharmonie and Grande Halle draw on the same stations."
+stade_charlety,Stade Sebastien Charlety,Paris 13e,48.81900,2.34650,70605|70623|70543,900,"T3a stop is 75m from the ground. Cite universitaire (70623) carries a large student baseline."
+paris_expo_versailles,Paris Expo Porte de Versailles,Paris 15e,48.83200,2.28700,71045|71055|73654,900,"Porte de Versailles (71045) is 21m away and is the dominant signal. Trade fairs run multi-day, so the shape is a plateau rather than a spike."
+villepinte_expo,Parc des Expositions de Paris-Nord Villepinte,Villepinte,48.97200,2.51500,73568,1500,"Served by a single dedicated RER B station (Parc des Expositions), which makes it the cleanest trade-fair signal in the region."
+la_seine_musicale,La Seine Musicale,Boulogne-Billancourt,48.82330,2.22990,69533|70698|70587,900,"On Ile Seguin. T2 Brimborion is nearest at 152m but low-capacity; Pont de Sevres (M9) carries most of the load."

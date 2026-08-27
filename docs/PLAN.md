@@ -16,9 +16,16 @@ and a collector that silently corrupts itself for six months is worse than none.
 Two data ideas were raised. One is better than it looks; the other is blocked.
 Both are resolved below, because they change what gets built.
 
-**Already on disk from before plan mode engaged:** `/home/alex/Projects/paris-mobility`
-containing `pyproject.toml`, `.python-version`, `.gitignore`, `src/parismob/config.py`,
-`src/parismob/lake.py`. Reviewed and consistent with this plan; keep or delete as preferred.
+> **Status: built and verified.** The collector layer described here is implemented
+> and has been run end to end against live sources. Ten years of validations
+> (18.4M rows, 77 MB of Parquet) are in the lake and the acceptance test passes.
+>
+> **This document was written before any data was downloaded, and several of its
+> factual claims turned out to be wrong** — including the download path, the schema,
+> and the size of the effect it tells you to look for. Corrections are inline below,
+> marked **[corrected]**, and the full account is in
+> [`FINDINGS.md`](FINDINGS.md). Read that before trusting any specific
+> number in here.
 
 ---
 
@@ -32,6 +39,13 @@ Better than it appears, for three reasons:
 - **Enormous and sharp.** A match at the Parc des Princes puts ~48k people onto M9/M10
   inside forty minutes. Stade de France puts ~80k onto RER B and D. That dwarfs the
   weather effects most people model first.
+
+  **[corrected]** Attendance is not what the data sees. Validations count *entries
+  only* — attendees tap in at their origin on the way there, and only pass a stadium
+  gate going home. A weekday international at the Stade de France yields **+10,000
+  to +13,000** marginal validations across four stations, not 80,000. The capture
+  ratio ranges from ~15% (weekday football) to ~90% (Olympic session days) and must
+  be modelled as a function of event and day type, not a constant.
 - **Absent from eqasim**, which synthesises a *typical* weekday. Events are precisely
   the extension that makes the model original rather than a re-run.
 
@@ -46,6 +60,15 @@ Same category, systematically ignored, worth collecting alongside:
 **Immediate validation, week one:** the validations dataset already covers 2015–2024.
 Join Stade de France station counts against known match dates — the spike should be
 visible by eye. If it isn't, the pipeline is broken, and you'll know early.
+
+**[corrected] — this test as written fails on a working pipeline.** Weekday events
+are buried under a ~47,000/day commuter baseline at La Plaine. The four France home
+qualifiers of 2019 were the four biggest days of the year at those stations, and
+still only reached 1.20–1.27× the annual median, while an ordinary Tuesday reached
+1.31×. Normalise by day-of-week, exclude Jul/Aug/Dec from the baseline, and judge on
+percentile rather than ratio; then the same four dates land at the 96th–98th
+percentile and pass unambiguously. Implemented in `analysis.py`; run it with
+`parismob events --venue stade_de_france --years 2019 --dates ...`.
 
 ---
 
@@ -155,6 +178,11 @@ All four endpoints verified live during planning.
 [Attachment index](https://data.iledefrance-mobilites.fr/explore/dataset/histo-validations-reseau-ferre/)
 lists one ZIP per year, 2015–2024. Fetch index → download ZIPs → extract → parse.
 
+**[corrected] The `/attachments` endpoint holds one PDF and no data.** The ZIPs are
+file-typed fields inside the dataset's ten *records*; fetch them from
+`/records`, reading `reseau_ferre.url`. A collector pointed at `/attachments`
+finds nothing and reports success.
+
 - Tab-separated `.txt`, not CSV. Two file kinds per period: `*_NB_FER` (daily counts),
   `*_PROFIL_FER` (hourly shape).
 - `NB_FER` columns: `JOUR, CODE_STIF_TRNS, CODE_STIF_RES, CODE_STIF_ARRET, LIBELLE_ARRET,
@@ -164,6 +192,19 @@ lists one ZIP per year, 2015–2024. Fetch index → download ZIPs → extract �
   within the same year; `NB_VALD` contains masked strings like `"Moins de 5"` for small
   counts, so the column is not natively numeric.
 - Scale: ~2M rows/year, ~20M total, 15 MB zipped → ~123 MB text per year.
+
+**[corrected] Ten format drifts, not two.** The stop id column is `ID_REFA_LDA`,
+`lda` or `ID_ZDC` depending on the year — never only `ID_ZDC`. Separators, file
+extensions, encodings (including a UTF-16 member and two BOM variants), a stray
+space in a 2023 filename, nested 2015–2019 archives inside the 2020 ZIP, and
+**three different date formats inside 2024 alone** all have to be handled. Masked
+`NB_VALD` values occur in 2015–2017 only. Actual scale is 18.4M rows, 77 MB of
+Parquet for the decade. Full list and the two silent-corruption cases:
+[`FINDINGS.md`](FINDINGS.md).
+
+The stop id joins to `id_ref_zdc` in the
+[stations reference](https://data.iledefrance-mobilites.fr/explore/dataset/emplacement-des-gares-idf/),
+which is what makes the venue registry work.
 - `CAT_JOUR` encodes IDFM's own day typology (working day / school-holiday working day /
   Saturday / Sunday-and-holiday) — direct evidence that the calendar features matter.
 
@@ -214,19 +255,37 @@ Non-interactive, re-runnable, explicit about what it fetched.
 
 ## Verification
 
-1. `uv sync && uv run parismob --help` — package resolves, entrypoint works.
+All steps below have been run. Results in [`FINDINGS.md`](FINDINGS.md).
+
+1. `uv sync && uv run parismob --help` — package resolves, entrypoint works. **PASS**
 2. `uv run parismob fetch calendar` — smallest source; confirms the write/manifest path
-   end to end.
+   end to end. **PASS** (143 holidays, 1,763 school-holiday rows, 340 for Zone C)
 3. `uv run parismob fetch validations --year 2024` — confirms ZIP handling, tab parsing,
-   the masked-value trap, and partition replacement.
+   the masked-value trap, and partition replacement. **PASS** (1,797,296 rows)
 4. **Re-run step 3 verbatim.** Row count in `parismob status` must be identical. This is
-   the idempotency test and the single most important check here.
-5. `uv run parismob fetch events` and `fetch validations --all`.
-6. `uv run parismob chart --station "LA PLAINE STADE DE FRANCE"` over 2019–2024. Expect
-   visible pandemic collapse, strike troughs, summer dips, and match-day spikes.
+   the idempotency test and the single most important check here. **PASS** — identical,
+   and the archived bytes were reused rather than re-downloaded.
+5. `uv run parismob fetch events` and `fetch validations --all`. **PASS** — 18,381,014
+   validation rows across ten partitions.
+6. **[corrected]** `parismob chart --station NAME` was replaced by
+   `parismob events --venue <id>`. Name matching does not survive contact with the
+   validations file, and the plan's own example string
+   (`LA PLAINE STADE DE FRANCE`) does not exist — the real value is hyphenated.
+   Venues resolve to numeric stop ids instead.
 7. **The real acceptance test:** join validations against a handful of known Stade de France
    event dates and confirm the spike is statistically obvious. If it isn't, stop and debug
    before building anything on top.
+
+   **[corrected] — see Decision 1.** Judged on percentile against a day-of-week
+   baseline, not on a raw ratio. **PASS**: the four 2019 France home qualifiers land
+   at the 96th–98th percentile of their year; the 2024 Olympic session days reach
+   the 100th. Both Olympic opening ceremonies correctly score *below* baseline,
+   because neither was held at this venue.
+
+8. **[added] Date integrity.** `parismob sql` over the whole lake must show complete
+   calendar coverage with no null dates. **PASS** — 3,653 days, 365/366 per year,
+   zero nulls. This is the check that caught the 2024 three-date-format bug, which
+   row counts alone would not have revealed.
 
 ## Out of scope here
 
@@ -239,3 +298,16 @@ and it's worth having the storage layer proven before something time-critical de
 
 Register for the key at [prim.iledefrance-mobilites.fr](https://prim.iledefrance-mobilites.fr/)
 while this work proceeds, so the archiver isn't blocked when we get to it.
+
+**[corrected] The archiver is now written** (`sources/prim_realtime.py`), since the
+storage layer it was waiting on is proven. It is the only collector here whose
+endpoint contracts have *not* been checked against a live service, because that
+needs the key. `parismob probe` verifies them the moment one exists; `parismob
+fetch prim` then runs.
+
+Note the tension this plan creates with its own argument. Decision 3 says the edge
+is perishable data, and that a day PRIM is not running is lost permanently. The
+historical ZIPs, by contrast, are static files that will be identical next year.
+Sequencing the irreplaceable work after the replaceable work is backwards on the
+plan's own reasoning — the key is the only thing standing between the project and
+the data it says it most wants.
