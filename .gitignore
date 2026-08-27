@@ -1,0 +1,15 @@
+# The data lake. Big, regenerable, and not yours to redistribute.
+data/raw/
+data/lake/
+data/lake.duckdb
+*.duckdb.wal
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Output
+out/
