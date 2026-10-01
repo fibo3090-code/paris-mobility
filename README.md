@@ -202,5 +202,6 @@ days. Treat capture as a function of event type, not a constant.
 
 ## Licence
 
-Not yet chosen. Note that eqasim is GPL, which will matter if its code is
-vendored rather than merely run.
+Code: MIT — see [LICENSE](LICENSE). Data fetched by the collectors keeps the
+licence of its source; see [`docs/SOURCES.md`](docs/SOURCES.md). eqasim is GPL,
+which will matter if its code is ever vendored rather than merely run.
