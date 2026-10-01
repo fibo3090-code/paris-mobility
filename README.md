@@ -1,5 +1,11 @@
 # paris-mobility
 
+> [!WARNING]
+> **Experimental project — for exploration only.** This repository is a personal
+> experiment, not a finished product. It may be incomplete or broken, and it is
+> not actively maintained. You are free to use, fork or adapt anything here under
+> the MIT licence, but review it carefully before relying on it.
+
 A mobility data lake for Île-de-France, and eventually an agent-based model built on it.
 
 The goal is to answer what-if questions that a purely statistical model cannot:
